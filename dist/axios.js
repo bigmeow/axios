@@ -1,4 +1,3 @@
-/* axios v0.19.0-beta.1 | (c) 2018 by Matt Zabriskie */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -66,7 +65,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var utils = __webpack_require__(2);
 	var bind = __webpack_require__(3);
 	var Axios = __webpack_require__(5);
-	var mergeConfig = __webpack_require__(22);
+	var mergeConfig = __webpack_require__(24);
 	var defaults = __webpack_require__(11);
 	
 	/**
@@ -100,15 +99,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	// Expose Cancel & CancelToken
-	axios.Cancel = __webpack_require__(23);
-	axios.CancelToken = __webpack_require__(24);
+	axios.Cancel = __webpack_require__(25);
+	axios.CancelToken = __webpack_require__(26);
 	axios.isCancel = __webpack_require__(10);
 	
 	// Expose all/spread
 	axios.all = function all(promises) {
 	  return Promise.all(promises);
 	};
-	axios.spread = __webpack_require__(25);
+	axios.spread = __webpack_require__(27);
 	
 	module.exports = axios;
 	
@@ -500,7 +499,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var buildURL = __webpack_require__(6);
 	var InterceptorManager = __webpack_require__(7);
 	var dispatchRequest = __webpack_require__(8);
-	var mergeConfig = __webpack_require__(22);
+	var mergeConfig = __webpack_require__(24);
 	
 	/**
 	 * Create a new instance of Axios
@@ -647,6 +646,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  if (serializedParams) {
+	    var hashmarkIndex = url.indexOf('#');
+	    if (hashmarkIndex !== -1) {
+	      url = url.slice(0, hashmarkIndex);
+	    }
+	
 	    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
 	  }
 	
@@ -722,8 +726,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var transformData = __webpack_require__(9);
 	var isCancel = __webpack_require__(10);
 	var defaults = __webpack_require__(11);
-	var isAbsoluteURL = __webpack_require__(20);
-	var combineURLs = __webpack_require__(21);
+	var isAbsoluteURL = __webpack_require__(22);
+	var combineURLs = __webpack_require__(23);
 	
 	/**
 	 * Throws a `Cancel` if cancellation has been requested.
@@ -869,6 +873,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } else if (typeof XMLHttpRequest !== 'undefined') {
 	    // For browsers use XHR adapter
 	    adapter = __webpack_require__(13);
+	  } else if (typeof wx !== 'undefined' && typeof wx.request === 'function') {
+	    // For wechat minapp use request adapter
+	    adapter = __webpack_require__(20);
 	  }
 	  return adapter;
 	}
@@ -1219,9 +1226,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (code) {
 	    error.code = code;
 	  }
+	
 	  error.request = request;
 	  error.response = response;
-	  error.toJSON = function() {
+	  error.isAxiosError = true;
+	
+	  error.toJSON = function _toJSON() {
 	    return {
 	      // Standard
 	      message: this.message,
@@ -1437,6 +1447,371 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	/*eslint no-console:0*/
+	
+	var utils = __webpack_require__(2);
+	var settle = __webpack_require__(14);
+	var buildURL = __webpack_require__(6);
+	var createError = __webpack_require__(15);
+	var base64 = __webpack_require__(21).Base64;
+	var warn = console.warn;
+	
+	module.exports = function xhrAdapter(config) {
+	  return new Promise(function dispatchXhrRequest(resolve, reject) {
+	    var mpConfig = {
+	      method: config.method.toUpperCase(),
+	      url: buildURL(config.url, config.params, config.paramsSerializer)
+	    };
+	    var requestData = config.data;
+	    var requestHeaders = config.headers;
+	    var requestTask;
+	
+	    if (utils.isFormData(requestData)) {
+	      delete requestHeaders['Content-Type']; // Let the browser set it
+	    }
+	
+	    // HTTP basic authentication
+	    if (config.auth) {
+	      var username = config.auth.username || '';
+	      var password = config.auth.password || '';
+	      requestHeaders.Authorization = 'Basic ' + base64.encode(username + ':' + password);
+	    }
+	
+	    // Set the request timeout
+	    if (config.timeout !== '') {
+	      warn('The "timeout" option is not supported by miniprogram. For more information about usage see "https://developers.weixin.qq.com/miniprogram/dev/framework/config.html#全局配置"');
+	    }
+	
+	    // Listen for success
+	    mpConfig.success = function handleSuccess(mpResponse) {
+	      // mpResponse formats: {data: any, errMsg: string, header: {[string]:string}, statusCode: number}
+	      // Prepare the response
+	      var statusText = '';
+	      if (mpResponse.statusCode === 200) {
+	        statusText = 'OK';
+	      } else if (mpResponse.statusCode === 400) {
+	        statusText = 'Bad Request';
+	      }
+	
+	      var response = {
+	        data: mpResponse.data,
+	        status: mpResponse.statusCode,
+	        statusText: statusText,
+	        headers: mpResponse.header,
+	        config: config,
+	        request: ''
+	      };
+	
+	      settle(resolve, reject, response);
+	    };
+	
+	    // Handle request Exception
+	    mpConfig.fail = function handleError(error) {
+	      if (error.errMsg.indexOf('request:fail abort') !== -1) {
+	        // Handle request cancellation (as opposed to a manual cancellation)
+	        reject(createError('Request aborted', config, 'ECONNABORTED', ''));
+	      } else if (error.errMsg.indexOf('timeout') !== -1) {
+	        // timeout
+	        reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED', ''));
+	      } else {
+	        // NetWordError
+	        reject(createError('Network Error', config, null, ''));
+	      }
+	    };
+	
+	
+	    // Add headers to the request
+	    utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+	      if ((typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') || key.toLowerCase() === 'referer') {
+	        // Remove Content-Type if data is undefined
+	        // and the miniprogram document said that '设置请求的 header，header 中不能设置 Referer'
+	        delete requestHeaders[key];
+	      }
+	    });
+	    mpConfig.header = requestHeaders;
+	
+	    // Add responseType to request if needed
+	    if (config.responseType) {
+	      mpConfig.responseType = config.responseType;
+	    }
+	
+	    // Handle progress if needed
+	    if (typeof config.onDownloadProgress === 'function') {
+	      warn('not support "onDownloadProgress" option by miniprogram');
+	    }
+	
+	    // Not all browsers support upload events
+	    if (typeof config.onUploadProgress === 'function') {
+	      warn('not support "onUploadProgress" option by miniprogram');
+	    }
+	
+	    if (config.cancelToken) {
+	      // Handle cancellation
+	      config.cancelToken.promise.then(function onCanceled(cancel) {
+	        if (!requestTask) {
+	          return;
+	        }
+	
+	        requestTask.abort();
+	        reject(cancel);
+	        // Clean up request
+	        requestTask = null;
+	      });
+	    }
+	
+	    if (requestData === undefined) {
+	      requestData = null;
+	    }
+	    mpConfig.data = requestData;
+	    // Send the request
+	    requestTask = wx.request(mpConfig);
+	  });
+	};
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {/*
+	 *  base64.js
+	 *
+	 *  Licensed under the BSD 3-Clause License.
+	 *    http://opensource.org/licenses/BSD-3-Clause
+	 *
+	 *  References:
+	 *    http://en.wikipedia.org/wiki/Base64
+	 */
+	;(function (global, factory) {
+	     true
+	        ? module.exports = factory(global)
+	        : typeof define === 'function' && define.amd
+	        ? define(factory) : factory(global)
+	}((
+	    typeof self !== 'undefined' ? self
+	        : typeof window !== 'undefined' ? window
+	        : typeof global !== 'undefined' ? global
+	: this
+	), function(global) {
+	    'use strict';
+	    // existing version for noConflict()
+	    var _Base64 = global.Base64;
+	    var version = "2.4.9";
+	    // if node.js and NOT React Native, we use Buffer
+	    var buffer;
+	    if (typeof module !== 'undefined' && module.exports) {
+	        try {
+	            buffer = eval("require('buffer').Buffer");
+	        } catch (err) {
+	            buffer = undefined;
+	        }
+	    }
+	    // constants
+	    var b64chars
+	        = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	    var b64tab = function(bin) {
+	        var t = {};
+	        for (var i = 0, l = bin.length; i < l; i++) t[bin.charAt(i)] = i;
+	        return t;
+	    }(b64chars);
+	    var fromCharCode = String.fromCharCode;
+	    // encoder stuff
+	    var cb_utob = function(c) {
+	        if (c.length < 2) {
+	            var cc = c.charCodeAt(0);
+	            return cc < 0x80 ? c
+	                : cc < 0x800 ? (fromCharCode(0xc0 | (cc >>> 6))
+	                                + fromCharCode(0x80 | (cc & 0x3f)))
+	                : (fromCharCode(0xe0 | ((cc >>> 12) & 0x0f))
+	                   + fromCharCode(0x80 | ((cc >>>  6) & 0x3f))
+	                   + fromCharCode(0x80 | ( cc         & 0x3f)));
+	        } else {
+	            var cc = 0x10000
+	                + (c.charCodeAt(0) - 0xD800) * 0x400
+	                + (c.charCodeAt(1) - 0xDC00);
+	            return (fromCharCode(0xf0 | ((cc >>> 18) & 0x07))
+	                    + fromCharCode(0x80 | ((cc >>> 12) & 0x3f))
+	                    + fromCharCode(0x80 | ((cc >>>  6) & 0x3f))
+	                    + fromCharCode(0x80 | ( cc         & 0x3f)));
+	        }
+	    };
+	    var re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;
+	    var utob = function(u) {
+	        return u.replace(re_utob, cb_utob);
+	    };
+	    var cb_encode = function(ccc) {
+	        var padlen = [0, 2, 1][ccc.length % 3],
+	        ord = ccc.charCodeAt(0) << 16
+	            | ((ccc.length > 1 ? ccc.charCodeAt(1) : 0) << 8)
+	            | ((ccc.length > 2 ? ccc.charCodeAt(2) : 0)),
+	        chars = [
+	            b64chars.charAt( ord >>> 18),
+	            b64chars.charAt((ord >>> 12) & 63),
+	            padlen >= 2 ? '=' : b64chars.charAt((ord >>> 6) & 63),
+	            padlen >= 1 ? '=' : b64chars.charAt(ord & 63)
+	        ];
+	        return chars.join('');
+	    };
+	    var btoa = global.btoa ? function(b) {
+	        return global.btoa(b);
+	    } : function(b) {
+	        return b.replace(/[\s\S]{1,3}/g, cb_encode);
+	    };
+	    var _encode = buffer ?
+	        buffer.from && Uint8Array && buffer.from !== Uint8Array.from
+	        ? function (u) {
+	            return (u.constructor === buffer.constructor ? u : buffer.from(u))
+	                .toString('base64')
+	        }
+	        :  function (u) {
+	            return (u.constructor === buffer.constructor ? u : new  buffer(u))
+	                .toString('base64')
+	        }
+	        : function (u) { return btoa(utob(u)) }
+	    ;
+	    var encode = function(u, urisafe) {
+	        return !urisafe
+	            ? _encode(String(u))
+	            : _encode(String(u)).replace(/[+\/]/g, function(m0) {
+	                return m0 == '+' ? '-' : '_';
+	            }).replace(/=/g, '');
+	    };
+	    var encodeURI = function(u) { return encode(u, true) };
+	    // decoder stuff
+	    var re_btou = new RegExp([
+	        '[\xC0-\xDF][\x80-\xBF]',
+	        '[\xE0-\xEF][\x80-\xBF]{2}',
+	        '[\xF0-\xF7][\x80-\xBF]{3}'
+	    ].join('|'), 'g');
+	    var cb_btou = function(cccc) {
+	        switch(cccc.length) {
+	        case 4:
+	            var cp = ((0x07 & cccc.charCodeAt(0)) << 18)
+	                |    ((0x3f & cccc.charCodeAt(1)) << 12)
+	                |    ((0x3f & cccc.charCodeAt(2)) <<  6)
+	                |     (0x3f & cccc.charCodeAt(3)),
+	            offset = cp - 0x10000;
+	            return (fromCharCode((offset  >>> 10) + 0xD800)
+	                    + fromCharCode((offset & 0x3FF) + 0xDC00));
+	        case 3:
+	            return fromCharCode(
+	                ((0x0f & cccc.charCodeAt(0)) << 12)
+	                    | ((0x3f & cccc.charCodeAt(1)) << 6)
+	                    |  (0x3f & cccc.charCodeAt(2))
+	            );
+	        default:
+	            return  fromCharCode(
+	                ((0x1f & cccc.charCodeAt(0)) << 6)
+	                    |  (0x3f & cccc.charCodeAt(1))
+	            );
+	        }
+	    };
+	    var btou = function(b) {
+	        return b.replace(re_btou, cb_btou);
+	    };
+	    var cb_decode = function(cccc) {
+	        var len = cccc.length,
+	        padlen = len % 4,
+	        n = (len > 0 ? b64tab[cccc.charAt(0)] << 18 : 0)
+	            | (len > 1 ? b64tab[cccc.charAt(1)] << 12 : 0)
+	            | (len > 2 ? b64tab[cccc.charAt(2)] <<  6 : 0)
+	            | (len > 3 ? b64tab[cccc.charAt(3)]       : 0),
+	        chars = [
+	            fromCharCode( n >>> 16),
+	            fromCharCode((n >>>  8) & 0xff),
+	            fromCharCode( n         & 0xff)
+	        ];
+	        chars.length -= [0, 0, 2, 1][padlen];
+	        return chars.join('');
+	    };
+	    var atob = global.atob ? function(a) {
+	        return global.atob(a);
+	    } : function(a){
+	        return a.replace(/[\s\S]{1,4}/g, cb_decode);
+	    };
+	    var _decode = buffer ?
+	        buffer.from && Uint8Array && buffer.from !== Uint8Array.from
+	        ? function(a) {
+	            return (a.constructor === buffer.constructor
+	                    ? a : buffer.from(a, 'base64')).toString();
+	        }
+	        : function(a) {
+	            return (a.constructor === buffer.constructor
+	                    ? a : new buffer(a, 'base64')).toString();
+	        }
+	        : function(a) { return btou(atob(a)) };
+	    var decode = function(a){
+	        return _decode(
+	            String(a).replace(/[-_]/g, function(m0) { return m0 == '-' ? '+' : '/' })
+	                .replace(/[^A-Za-z0-9\+\/]/g, '')
+	        );
+	    };
+	    var noConflict = function() {
+	        var Base64 = global.Base64;
+	        global.Base64 = _Base64;
+	        return Base64;
+	    };
+	    // export Base64
+	    global.Base64 = {
+	        VERSION: version,
+	        atob: atob,
+	        btoa: btoa,
+	        fromBase64: decode,
+	        toBase64: encode,
+	        utob: utob,
+	        encode: encode,
+	        encodeURI: encodeURI,
+	        btou: btou,
+	        decode: decode,
+	        noConflict: noConflict,
+	        __buffer__: buffer
+	    };
+	    // if ES5 is available, make Base64.extendString() available
+	    if (typeof Object.defineProperty === 'function') {
+	        var noEnum = function(v){
+	            return {value:v,enumerable:false,writable:true,configurable:true};
+	        };
+	        global.Base64.extendString = function () {
+	            Object.defineProperty(
+	                String.prototype, 'fromBase64', noEnum(function () {
+	                    return decode(this)
+	                }));
+	            Object.defineProperty(
+	                String.prototype, 'toBase64', noEnum(function (urisafe) {
+	                    return encode(this, urisafe)
+	                }));
+	            Object.defineProperty(
+	                String.prototype, 'toBase64URI', noEnum(function () {
+	                    return encode(this, true)
+	                }));
+	        };
+	    }
+	    //
+	    // export Base64 to the namespace
+	    //
+	    if (global['Meteor']) { // Meteor.js
+	        Base64 = global.Base64;
+	    }
+	    // module.exports and AMD are mutually exclusive.
+	    // module.exports has precedence.
+	    if (typeof module !== 'undefined' && module.exports) {
+	        module.exports.Base64 = global.Base64;
+	    }
+	    else if (true) {
+	        // AMD. Register as an anonymous module.
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function(){ return global.Base64 }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    }
+	    // that's it!
+	    return {Base64: global.Base64}
+	}));
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }),
+/* 22 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -1456,7 +1831,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -1476,7 +1851,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1533,7 +1908,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -1558,12 +1933,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var Cancel = __webpack_require__(23);
+	var Cancel = __webpack_require__(25);
 	
 	/**
 	 * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -1621,7 +1996,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports) {
 
 	'use strict';
