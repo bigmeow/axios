@@ -1459,7 +1459,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var base64 = __webpack_require__(21).Base64;
 	var warn = console.warn;
 	
-	module.exports = function xhrAdapter(config) {
+	module.exports = function mpAdapter(config) {
 	  return new Promise(function dispatchXhrRequest(resolve, reject) {
 	    var mpConfig = {
 	      method: config.method.toUpperCase(),
@@ -1481,7 +1481,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    // Set the request timeout
-	    if (config.timeout !== '') {
+	    if (config.timeout !== 0) {
 	      warn('The "timeout" option is not supported by miniprogram. For more information about usage see "https://developers.weixin.qq.com/miniprogram/dev/framework/config.html#全局配置"');
 	    }
 	
@@ -1562,10 +1562,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	    }
 	
-	    if (requestData === undefined) {
-	      requestData = null;
+	    if (requestData !== undefined) {
+	      mpConfig.data = requestData;
 	    }
-	    mpConfig.data = requestData;
 	    // Send the request
 	    requestTask = wx.request(mpConfig);
 	  });
