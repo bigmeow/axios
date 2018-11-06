@@ -33,13 +33,13 @@ All ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ | 11 �
 Using npm:
 
 ```bash
-$ npm install axios
+$ npm install axios-plus
 ```
 
 Using bower:
 
 ```bash
-$ bower install axios
+$ bower install axios-plus
 ```
 
 Using cdn:
@@ -53,7 +53,7 @@ Using cdn:
 Performing a `GET` request
 
 ```js
-const axios = require('axios');
+const axios = require('axios-plus');
 
 // Make a request for a user with a given ID
 axios.get('/user?ID=12345')
