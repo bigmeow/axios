@@ -8,7 +8,11 @@
 [![gitter chat](https://img.shields.io/gitter/room/mzabriskie/axios.svg?style=flat-square)](https://gitter.im/mzabriskie/axios)
 [![code helpers](https://www.codetriage.com/axios/axios/badges/users.svg)](https://www.codetriage.com/axios/axios)
 
-Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，基于axios扩展而来
+Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，forked自axios，为其增加了小程序的adapters
+
+- 修改的代码目录为：https://github.com/bigmeow/axios/tree/master/lib/adapters
+- 小程序示例子:https://github.com/bigmeow/axios/tree/master/miniprograme-example
+- TODO： 请求队列限制（解决小程序目前只能同时最大迸发10个请求）
 
 ## Features
 - Make [wx.request](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html) from the miniProgram
