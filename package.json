@@ -1,7 +1,7 @@
 {
   "name": "axios",
   "version": "0.19.0-beta.1",
-  "description": "Promise based HTTP client for the browser and node.js",
+  "description": "Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，基于axios扩展而来",
   "main": "index.js",
   "scripts": {
     "test": "grunt test && bundlesize",
@@ -16,21 +16,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axios/axios.git"
+    "url": "https://github.com/bigmeow/axios"
   },
   "keywords": [
     "xhr",
     "http",
     "ajax",
     "promise",
-    "node"
+    "node",
+    "miniprogram"
   ],
-  "author": "Matt Zabriskie",
+  "author": "bigMeow",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/axios/axios/issues"
+    "url": "https://github.com/bigmeow/axios/issues"
   },
-  "homepage": "https://github.com/axios/axios",
+  "homepage": "https://github.com/bigmeow/axios",
   "devDependencies": {
     "bundlesize": "^0.17.0",
     "coveralls": "^3.0.0",
