@@ -14,6 +14,51 @@ Promise based HTTP client for the browser, wechat miniprogram and node.js  一�
 - 小程序示例子:https://github.com/bigmeow/axios/tree/master/miniprograme-example
 - TODO： 请求队列限制（解决小程序目前只能同时最大迸发10个请求）
 
+## 注意
+### 问题
+在mpvue、megalo 等vue转小程序的框架中使用时,由于这些框架修改了webpack的target配置,(不修改的话默认值是web)例如:
+```js
+// mpvue 的 https://github.com/mpvue/mpvue-quickstart/blob/master/template/build/webpack.base.conf.js
+target: require('mpvue-webpack-target')
+```
+```js
+//megalo 的  https://github.com/kaola-fed/megalo-demo/blob/master/build/createBaseConfig.js
+target: createMegaloTarget( {
+  compiler: Object.assign( compiler, { } ),
+  platform,
+  htmlParse: {
+    templateName: 'octoParse',
+    src: _.resolve(`./node_modules/octoparse/lib/platform/${platform}`)
+  }
+} )
+```
+所以如果你直接在工程中引入```axios``` 或者```axios-plus```都会引起编译报错,这是因为```axios```同时支持了nodejs和浏览器的http请求,你在浏览器使用axios就不打包nodejs相关的代码,在nodejs使用时axios则不打包浏览器相关的xmlHttpRequest对象,从而减少打包的体积,为了实现这个效果,axios的package.json加了下面这行配置:
+```json
+// 表示在webpack的target值为 web 时,将代码中的http.js(nodejs环境需要的)引用替换成xhr.js(浏览器环境需要的),从而实现只打包相关平台代码的作用
+"browser": {
+  "./lib/adapters/http.js": "./lib/adapters/xhr.js"
+}
+```
+而webpack配置文件的target被修改后,axios的这个配置就不起作用了,就会去加载nodejs环境的代码,从而导致编译报错
+### 解决方案
+axios-plus  fork 自axios,自然也有这个问题存在,解决办法很简单:
+- 给axios-plus的package.json配置文件增加字段(目前库已加)
+```json
+"miniprogram": {
+  "./lib/adapters/http.js": "./lib/adapters/mp.js",
+  "./lib/adapters/xhr.js": "./lib/adapters/mp.js"
+}
+```
+- 在自己的工程项目里给webpack配置文件增加下面的配置选项([参考例子](https://github.com/bigmeow/axios/blob/master/miniprograme-example/build/createBaseConfig.js)):
+```js
+resolve: {
+  // https://webpack.docschina.org/configuration/resolve/#resolve-aliasfields 告诉weboack在target被修改后可以尝试去查找下package.json的miniprogram字段
+  aliasFields: ['miniprogram']
+}
+```
+### 结论:所以,你完全不用担心适配了多平台后axios的包体积会变大,在小程序环境下它只会打包和小程序相关的代码!
+
+
 ## Features
 - Make [wx.request](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html) from the miniProgram
 - Make [XMLHttpRequests](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) from the browser
