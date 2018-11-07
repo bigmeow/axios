@@ -73,8 +73,9 @@
   "browser": {
     "./lib/adapters/http.js": "./lib/adapters/xhr.js"
   },
-  "module": {
-    "./lib/adapters/http.js": "./lib/adapters/mp.js"
+  "miniprogram": {
+    "./lib/adapters/http.js": "./lib/adapters/mp.js",
+    "./lib/adapters/xhr.js": "./lib/adapters/mp.js"
   },
   "typings": "./index.d.ts",
   "dependencies": {
