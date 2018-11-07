@@ -1,9 +1,9 @@
 # axios-plus
 
-[![npm version](https://img.shields.io/npm/v/axios.svg?style=flat-square)](https://www.npmjs.org/package/axios)
-[![build status](https://img.shields.io/travis/axios/axios.svg?style=flat-square)](https://travis-ci.org/axios/axios)
-[![code coverage](https://img.shields.io/coveralls/mzabriskie/axios.svg?style=flat-square)](https://coveralls.io/r/mzabriskie/axios)
-[![install size](https://packagephobia.now.sh/badge?p=axios)](https://packagephobia.now.sh/result?p=axios)
+[![npm version](https://img.shields.io/npm/v/axios-plus.svg?style=flat-square)](https://www.npmjs.org/package/axios-plus)
+[![build status](https://img.shields.io/travis/bigmeow/axios-plus.svg?style=flat-square)](https://travis-ci.org/bigmeow/axios-plus)
+[![code coverage](https://img.shields.io/coveralls/bigmeow/axios-plus.svg?style=flat-square)](https://coveralls.io/r/bigmeow/axios-plus)
+[![install size](https://packagephobia.now.sh/badge?p=axios)](https://packagephobia.now.sh/result?p=axios-plus)
 [![npm downloads](https://img.shields.io/npm/dm/axios.svg?style=flat-square)](http://npm-stat.com/charts.html?package=axios)
 [![gitter chat](https://img.shields.io/gitter/room/mzabriskie/axios.svg?style=flat-square)](https://gitter.im/mzabriskie/axios)
 [![code helpers](https://www.codetriage.com/axios/axios/badges/users.svg)](https://www.codetriage.com/axios/axios)
