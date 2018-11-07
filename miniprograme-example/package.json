@@ -38,7 +38,7 @@
     "webpack-dev-server": "^3.1.5"
   },
   "dependencies": {
-    "axios-plus": "^0.18.0",
+    "axios-plus": "https://github.com/bigmeow/axios.git",
     "@megalo/vhtml-plugin": "^0.1.0",
     "megalo": "^0.1.3-1",
     "octoparse": "^0.1.11"

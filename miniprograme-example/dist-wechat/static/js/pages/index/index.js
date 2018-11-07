@@ -228,9 +228,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+var _axiosPlus = __webpack_require__(/*! axios-plus */ "./node_modules/axios-plus/index.js");
 
-var _axios2 = _interopRequireDefault(_axios);
+var _axiosPlus2 = _interopRequireDefault(_axiosPlus);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -245,7 +245,7 @@ exports.default = {
   methods: {
     handleBase: function handleBase() {
       // 创建实例 设置baseURL
-      var instance = _axios2.default.create({
+      var instance = _axiosPlus2.default.create({
         baseURL: 'https://easy-mock.com'
       });
       // 设置token
@@ -280,13 +280,13 @@ exports.default = {
       });
     },
     all: function all() {
-      _axios2.default.all([_axios2.default.get('https://api.github.com/users/mzabriskie'), _axios2.default.get('https://api.github.com/users/mzabriskie/orgs')]).then(_axios2.default.spread(function (user, orgs) {
+      _axiosPlus2.default.all([_axiosPlus2.default.get('https://api.github.com/users/mzabriskie'), _axiosPlus2.default.get('https://api.github.com/users/mzabriskie/orgs')]).then(_axiosPlus2.default.spread(function (user, orgs) {
         console.log('接口1数据:', user.data.avatar_url, user.data.name);
         console.log('接口2数据:', orgs.data);
       }));
     },
     catchError: function catchError() {
-      _axios2.default.post('https://easy-mock.com/mock/5be12b95f7aed41684f2daea/axiosTest/getPersonByPost22').then(function (resp) {
+      _axiosPlus2.default.post('https://easy-mock.com/mock/5be12b95f7aed41684f2daea/axiosTest/getPersonByPost22').then(function (resp) {
         console.log('Post请求成功:', resp);
       }).catch(function (error) {
         console.log('捕获到了异常：', JSON.stringify(error));
@@ -298,8 +298,8 @@ exports.default = {
         return d.getMonth() + 1 + '/' + d.getDate() + '/' + d.getFullYear();
       }
 
-      _axios2.default.get('https://api.github.com/users/mzabriskie', {
-        transformResponse: _axios2.default.defaults.transformResponse.concat(function (data, headers) {
+      _axiosPlus2.default.get('https://api.github.com/users/mzabriskie', {
+        transformResponse: _axiosPlus2.default.defaults.transformResponse.concat(function (data, headers) {
           Object.keys(data).forEach(function (k) {
             if (ISO_8601.test(data[k])) {
               console.log('\u5B57\u6BB5' + k + '\u8F6C\u6362\u524D\uFF1A', data[k]);
@@ -319,7 +319,7 @@ exports.default = {
 
     // 拦截器测试
     interceptors: function interceptors() {
-      var instance = _axios2.default.create({
+      var instance = _axiosPlus2.default.create({
         baseURL: 'https://easy-mock.com'
       });
       // 请求拦截器

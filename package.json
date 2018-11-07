@@ -1,6 +1,6 @@
 {
   "name": "axios-plus",
-  "version": "0.19.0-beta.1",
+  "version": "0.19.0-beta.2",
   "description": "Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，基于axios扩展而来",
   "main": "index.js",
   "scripts": {

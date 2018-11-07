@@ -1,12 +1,12 @@
 {
-  "name": "axios",
+  "name": "axios-plus",
   "main": "./dist/axios.js",
-  "version": "0.19.0-beta.1",
-  "homepage": "https://github.com/axios/axios",
+  "version": "0.19.0-beta.2",
+  "homepage": "https://github.com/bigmeow/axios",
   "authors": [
-    "Matt Zabriskie"
+    "bigMeow"
   ],
-  "description": "Promise based HTTP client for the browser and node.js",
+  "description": "Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，基于axios扩展而来",
   "moduleType": [
     "amd",
     "globals"
@@ -16,7 +16,9 @@
     "http",
     "ajax",
     "promise",
-    "node"
+    "node",
+    "miniprogram",
+    "小程序"
   ],
   "license": "MIT",
   "ignore": [

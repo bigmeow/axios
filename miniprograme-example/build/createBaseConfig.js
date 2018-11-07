@@ -55,6 +55,8 @@ function createBaseConfig( platform = 'wechat' ) {
         'vue': 'megalo',
         '@': _.resolve('src')
       },
+      // https://webpack.docschina.org/configuration/resolve/#resolve-aliasfields
+      aliasFields: ['miniprogram'],
     },
 
     module: {
