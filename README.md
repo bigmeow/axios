@@ -10,6 +10,8 @@
 
 Promise based HTTP client for the browser, wechat miniprogram and node.js  一款基于promise的多终端Http requesut 库，支持web、微信小程序和nodejs，forked自axios，为其增加了小程序的adapters
 
+axios支持自定义适配器，所以推荐使用https://github.com/bigmeow/axios-miniprogram-adapter  耦合度更低
+
 - 修改的代码目录为：https://github.com/bigmeow/axios/tree/master/lib/adapters
 - 小程序示例子:https://github.com/bigmeow/axios/tree/master/miniprograme-example
 - TODO： 请求队列限制（解决小程序目前只能同时最大迸发10个请求）
